@@ -1,0 +1,69 @@
+from PIL import Image
+import pytesseract
+
+stock = {}
+
+def extract_bill_data(image_path):
+    img = Image.open(image_path)
+    extracted_text = pytesseract.image_to_string(img)
+    print("Extracted Text from Image:")
+    print(extracted_text)
+    return extracted_text
+
+def parse_and_store_data(extracted_text):
+    lines = extracted_text.splitlines()
+    for line in lines:
+        parts = line.split()
+        if len(parts) >= 2:
+            resource = " ".join(parts[:-1])
+            try:
+                quantity = int(parts[-1])
+                stock[resource] = quantity
+            except ValueError:
+                continue
+    print("\nStock report updated from image or text input!")
+
+def input_resources():
+    while True:
+        resource = input("Enter resource name (or type 'done' to finish): ")
+        if resource.lower() == 'done':
+            break
+        quantity = int(input(f"Enter quantity for {resource}: "))
+        stock[resource] = quantity
+    print("\nStock report updated!")
+
+def record_expenditure():
+    resource = input("Enter resource name for expenditure: ")
+    if resource in stock:
+        expenditure = int(input("Enter expenditure amount: "))
+        stock[resource] -= expenditure
+        print(f"Remaining stock for {resource}: {stock[resource]}")
+    else:
+        print("Resource not found in stock.")
+
+def stock_duration():
+    resource = input("Enter resource name to estimate duration: ")
+    if resource in stock:
+        daily_expenditure = int(input("Enter today's expenditure amount: "))
+        if daily_expenditure > 0:
+            remaining_days = stock[resource] // daily_expenditure
+            print(f"Estimated days remaining for {resource}: {remaining_days}")
+        else:
+            print("Expenditure must be greater than zero.")
+    else:
+        print("Resource not found in stock.")
+
+def main():
+    choice = input("Do you want to upload a bill image? (yes/no): ").strip().lower()
+    if choice == 'yes':
+        image_path = input("Enter the path to the bill image: ").strip()
+        extracted_text = extract_bill_data(image_path)
+        parse_and_store_data(extracted_text)
+    else:
+        input_resources()
+    
+    record_expenditure()
+    stock_duration()
+    print("\nFinal Stock Report:", stock)
+
+main()
